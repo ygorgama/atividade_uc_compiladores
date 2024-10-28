@@ -1,15 +1,24 @@
 package facs.edu.entities.enums;
 
 public enum TokensTypes {
-    INT,
-    DOUBLE,
+    INTEGER,
+    BOOLEAN,
     STRING,
-    FOR,
-    WHILE,
-    IF,
-    ELSE,
+    TO,
+    LOOP,
+    THIS,
+    OR,
     PRINT,
+    DIGINT,
+    BOOL,
+    ID,
+    LETSTRING,
     SPACE,
     OPERATOR_PLUS,
     OPERATOR_MINUS,
+    RPAREN,
+    LPAREN,
+    RKEY,
+    LKEY
+
 }

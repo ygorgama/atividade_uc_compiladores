@@ -19,6 +19,6 @@ public enum TokensTypes {
     RPAREN,
     LPAREN,
     RKEY,
-    LKEY
-
+    LKEY,
+    END_LINE
 }

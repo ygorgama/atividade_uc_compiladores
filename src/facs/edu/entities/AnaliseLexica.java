@@ -42,7 +42,7 @@ public class AnaliseLexica {
                 }else if(hasSpecialToken(charAt, presentLine, i)){
                     System.out.println("SPECIAL TOKEN");
                 }
-                else if (isReservedWord(charAt,presentLine, i)) {
+                else if (validateString(charAt,presentLine, i, l)) {
                     System.out.println("RESERVED");
                 }
             }
@@ -53,32 +53,6 @@ public class AnaliseLexica {
 
         tokenList.sort(Comparator.comparing(Token::getTokenPosition));
         this.removeWhiteSpacesFromList();
-    }
-
-    private boolean isAnArithmeticOperator(Character character, int foundLine, int foundPosition){
-        Pattern pattern = Pattern.compile(operators);
-        Matcher matcher = pattern.matcher(character.toString());
-
-        if (matcher.find()){
-            TokensTypes tokensTypes = switch (matcher.group()) {
-                case "+" -> TokensTypes.OPERATOR_PLUS;
-                case "-" -> TokensTypes.OPERATOR_MINUS;
-                default -> throw new IllegalStateException("Unexpected value: " + matcher.group());
-            };
-
-            Token token = new Token(
-                    tokensTypes,
-                    matcher.group(),
-                    foundLine,
-                    foundPosition
-            );
-
-            tokenList.add(token);
-
-            return true;
-        }
-
-        return false;
     }
 
     private boolean isSpace(Character character, int foundLine, int foundPosition){
@@ -118,42 +92,73 @@ public class AnaliseLexica {
         return false;
     }
 
-    private boolean isReservedWord(Character character, int foundLine, int foundPosition) {
-
+    private boolean validateString(Character character, int foundLine, int foundPosition, String fullLine){
         if (characterList.isEmpty()){
             this.firstPosition = foundPosition;
         }
 
-        if (characterList.size() > 1){
-            String stringToCheck = "";
-
-            for (Character c : characterList){
-                stringToCheck = stringToCheck + c;
-            }
-
-            Pattern pattern = Pattern.compile(this.regexKeyWords);
-            Matcher matcher = pattern.matcher(stringToCheck);
-
-            if(matcher.find()){
-                Token token = new Token(
-                        TokensTypes.valueOf(matcher.group().toUpperCase()),
-                        matcher.group(),
-                        foundLine,
-                        this.firstPosition
-                );
-
-
-                tokenList.add(token);
-
-                this.characterList = new ArrayList<>();
-                this.firstPosition = null;
-                return true;
-            }
-        }
-
         characterList.add(character);
 
+        StringBuilder stringToCheck = new StringBuilder();
+
+        for (Character c : characterList){
+            stringToCheck.append(c);
+        }
+
+        try {
+            if (fullLine.charAt(foundPosition + 1) == ' ' || fullLine.charAt(foundPosition + 1) == '=' || fullLine.charAt(foundPosition + 1) == ';'){
+                if (isReservedWord(stringToCheck.toString(), foundLine)){
+                    return true;
+                }else if(isId(stringToCheck.toString(), foundLine)){
+                    return  true;
+                }
+            }else {
+                if (isReservedWord(stringToCheck.toString(), foundLine)){
+                    return true;
+                }
+            }
+        }catch (StringIndexOutOfBoundsException ignored) {
+        }
+
         return false;
+    }
+
+    private boolean isReservedWord(String valueToCheck, int foundLine) {
+        Pattern pattern = Pattern.compile(this.regexKeyWords);
+        Matcher matcher = pattern.matcher(valueToCheck);
+
+        if(matcher.find()){
+            Token token = new Token(
+                    TokensTypes.valueOf(matcher.group().toUpperCase()),
+                    matcher.group(),
+                    foundLine,
+                    this.firstPosition
+            );
+
+
+            tokenList.add(token);
+
+            this.characterList = new ArrayList<>();
+            this.firstPosition = null;
+            return true;
+        }
+
+        return false;
+    };
+
+    private boolean isId(String valueToCheck, int foundLine) {
+        Token token = new Token(
+                TokensTypes.ID,
+                valueToCheck,
+                foundLine,
+                this.firstPosition
+        );
+
+        tokenList.add(token);
+
+        this.characterList = new ArrayList<>();
+        this.firstPosition = null;
+        return true;
     };
 
     private boolean hasSpecialToken(Character character, int foundLine, int foundPosition){
@@ -195,6 +200,33 @@ public class AnaliseLexica {
                         foundPosition
                 );
                 functionReturn = true;
+                break;
+            case '+':
+                token = new Token(
+                        TokensTypes.OPERATOR_PLUS,
+                        "+",
+                        foundLine,
+                        foundPosition
+                );
+                functionReturn =true;
+                break;
+            case '-':
+                token = new Token(
+                        TokensTypes.OPERATOR_MINUS,
+                        "-",
+                        foundLine,
+                        foundPosition
+                );
+                functionReturn =true;
+                break;
+            case ';':
+                token = new Token(
+                        TokensTypes.END_LINE,
+                        ";",
+                        foundLine,
+                        foundPosition
+                );
+                functionReturn =true;
                 break;
             default:
                 functionReturn = false;

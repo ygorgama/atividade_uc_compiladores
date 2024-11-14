@@ -14,7 +14,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class AnaliseLexica {
-    private final String regexKeyWords = "\\b(to|this|or|loop|Print|digint|bool|letstring)\\b";
     private final String operators = "[+\\-*/]";
     private final BufferedReader reader;
     private List<Token> tokenList = new LinkedList<>();
@@ -28,22 +27,42 @@ public class AnaliseLexica {
 
     public void run() throws IOException {
         List<String> lines = reader.lines().toList();
-
+        boolean isOpenString = false;
+        int numbesOfAspas = 0;
         int presentLine = 0;
+        List<Character> stringFormation = new ArrayList<Character>();
 
         for (String l : lines) {
             for (int i = 0; i < l.length(); i++) {
                 char charAt = l.charAt(i);
 
-                if (isSpace(charAt, presentLine, i)){
-                    System.out.println("SPACE");
+                if(charAt == '"' || isOpenString){
+                    isOpenString = true;
+                    stringFormation.add(charAt);
+                    if (numbesOfAspas == 0){
+                        this.firstPosition = i;
+                    }
+
+                    if (charAt == '"'){
+                        numbesOfAspas++;
+                    }
+
+                    if (numbesOfAspas == 2){
+                        isOpenString = false;
+                        validateString(stringFormation, presentLine);
+                        System.out.println("STRING");
+                    }
+
+                }
+                else if (isSpace(charAt, presentLine, i)){
+                    System.out.println("SKIP");
                 } else if (isInteger(charAt, presentLine, i)) {
                     System.out.println("INTEGER");
                 }else if(hasSpecialToken(charAt, presentLine, i)){
-                    System.out.println("SPECIAL TOKEN");
+                    System.out.println("ARYTHMETICAL | SPECIAL");
                 }
                 else if (validateString(charAt,presentLine, i, l)) {
-                    System.out.println("RESERVED");
+                    System.out.println("ID | RESERVED WORD");
                 }
             }
 
@@ -58,7 +77,7 @@ public class AnaliseLexica {
     private boolean isSpace(Character character, int foundLine, int foundPosition){
         if (character == ' '){
             Token token = new Token(
-                    TokensTypes.SPACE,
+                    TokensTypes.SKIP,
                     " ",
                     foundLine,
                     foundPosition
@@ -69,6 +88,23 @@ public class AnaliseLexica {
         }
 
         return false;
+    }
+
+    private void validateString(List<Character> sentence, int foundLine) {
+        StringBuilder definedString = new StringBuilder();
+
+        for (Character character : sentence){
+            definedString.append(character);
+        }
+
+        Token token = new Token(
+                TokensTypes.STRING,
+                definedString.toString(),
+                foundLine,
+                this.firstPosition
+        );
+        tokenList.add(token);
+
     }
 
     private boolean isInteger(Character character, int foundLine, int foundPosition){
@@ -124,7 +160,8 @@ public class AnaliseLexica {
     }
 
     private boolean isReservedWord(String valueToCheck, int foundLine) {
-        Pattern pattern = Pattern.compile(this.regexKeyWords);
+        String regexKeyWords = "\\b(to|this|or|loop|Print|digint|digdouble|letter)\\b";
+        Pattern pattern = Pattern.compile(regexKeyWords);
         Matcher matcher = pattern.matcher(valueToCheck);
 
         if(matcher.find()){
@@ -219,6 +256,24 @@ public class AnaliseLexica {
                 );
                 functionReturn =true;
                 break;
+            case '*':
+                token = new Token(
+                        TokensTypes.OPERATOR_MULTIPLICATE,
+                        "*",
+                        foundLine,
+                        foundPosition
+                );
+                functionReturn =true;
+                break;
+            case '/':
+                token = new Token(
+                        TokensTypes.OPERATOR_DIVISION,
+                        "/",
+                        foundLine,
+                        foundPosition
+                );
+                functionReturn =true;
+                break;
             case ';':
                 token = new Token(
                         TokensTypes.END_LINE,
@@ -228,9 +283,16 @@ public class AnaliseLexica {
                 );
                 functionReturn =true;
                 break;
+            case '.':
+                token = new Token(
+                        TokensTypes.FLOAT,
+                        ".",
+                        foundLine,
+                        foundPosition
+                );
+                functionReturn =true;
             default:
-                functionReturn = false;
-                break;
+                    break;
         }
 
         if (functionReturn){
@@ -241,7 +303,7 @@ public class AnaliseLexica {
     }
 
     private void removeWhiteSpacesFromList(){
-        this.tokenList = this.tokenList.stream().filter(token -> token.getTokenType() != TokensTypes.SPACE).toList();
+        this.tokenList = this.tokenList.stream().filter(token -> token.getTokenType() != TokensTypes.SKIP).toList();
     }
 
     @Override

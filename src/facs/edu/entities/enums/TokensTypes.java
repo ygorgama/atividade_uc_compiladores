@@ -10,15 +10,19 @@ public enum TokensTypes {
     OR,
     PRINT,
     DIGINT,
+    DIGDOUBLE,
     BOOL,
     ID,
-    LETSTRING,
-    SPACE,
+    LETTER,
+    SKIP,
     OPERATOR_PLUS,
     OPERATOR_MINUS,
+    OPERATOR_MULTIPLICATE,
+    OPERATOR_DIVISION,
     RPAREN,
     LPAREN,
     RKEY,
     LKEY,
-    END_LINE
+    END_LINE,
+    FLOAT
 }
